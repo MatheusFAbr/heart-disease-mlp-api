@@ -1,0 +1,99 @@
+# Testes de integração da API (REST Client / Thunder Client).
+# Servidor: uv run fastapi dev src/app.py  (base: http://127.0.0.1:8000)
+# Todas as requisições enviam o cabeçalho User-Agent: Tester-Audit-Agent.
+#
+# Cenários:
+#   1. Metadados do serviço (GET) -> 200 com o JSON de diagnóstico.
+#   2. Perfil A (baixo risco, esperado classe 0) -> 200, categoria "Sem indicativo...".
+#   3. Perfil B (alto risco, esperado classe 1) -> 200, categoria "Com indicativo...".
+#   4. Entrada inválida: texto em campo numérico (Age) -> 422 (validação Pydantic).
+#   5. Entrada inválida: valor fora do limite (Age = 150) -> 422 (validação Pydantic).
+#
+# Os perfis A e B foram escolhidos após testar o pipeline treinado, produzindo
+# predições distintas (classe 0 e classe 1) com alta confiança.
+
+### 1. Metadados do serviço
+GET http://127.0.0.1:8000/diagnostico/modelo
+User-Agent: Tester-Audit-Agent
+Accept: application/json
+
+### 2. Predição com Perfil A (esperado: classe 0, sem indicativo)
+POST http://127.0.0.1:8000/predict
+User-Agent: Tester-Audit-Agent
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Age": 35,
+  "Sex": "F",
+  "ChestPainType": "ATA",
+  "RestingBP": 110,
+  "Cholesterol": 190,
+  "FastingBS": 0,
+  "RestingECG": "Normal",
+  "MaxHR": 170,
+  "ExerciseAngina": "N",
+  "Oldpeak": 0.0,
+  "ST_Slope": "Up"
+}
+
+### 3. Predição com Perfil B (esperado: classe 1, com indicativo)
+POST http://127.0.0.1:8000/predict
+User-Agent: Tester-Audit-Agent
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Age": 60,
+  "Sex": "M",
+  "ChestPainType": "ASY",
+  "RestingBP": 140,
+  "Cholesterol": 260,
+  "FastingBS": 1,
+  "RestingECG": "ST",
+  "MaxHR": 110,
+  "ExerciseAngina": "Y",
+  "Oldpeak": 2.0,
+  "ST_Slope": "Flat"
+}
+
+### 4. Entrada inválida: texto em campo numérico (esperado: HTTP 422)
+POST http://127.0.0.1:8000/predict
+User-Agent: Tester-Audit-Agent
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Age": "invalido",
+  "Sex": "F",
+  "ChestPainType": "ATA",
+  "RestingBP": 110,
+  "Cholesterol": 190,
+  "FastingBS": 0,
+  "RestingECG": "Normal",
+  "MaxHR": 170,
+  "ExerciseAngina": "N",
+  "Oldpeak": 0.0,
+  "ST_Slope": "Up"
+}
+
+### 5. Entrada inválida: valor fora do limite definido (esperado: HTTP 422)
+# Age deve estar entre 18 e 100.
+POST http://127.0.0.1:8000/predict
+User-Agent: Tester-Audit-Agent
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Age": 150,
+  "Sex": "F",
+  "ChestPainType": "ATA",
+  "RestingBP": 110,
+  "Cholesterol": 190,
+  "FastingBS": 0,
+  "RestingECG": "Normal",
+  "MaxHR": 170,
+  "ExerciseAngina": "N",
+  "Oldpeak": 0.0,
+  "ST_Slope": "Up"
+}

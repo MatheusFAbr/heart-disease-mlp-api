@@ -1,0 +1,21 @@
+[project]
+name = "heart-disease-mlp-api"
+version = "0.1.0"
+description = "Classificação de indicativos de doença cardíaca com MLP (Scikit-Learn) e API FastAPI. Projeto acadêmico, não é ferramenta de diagnóstico."
+requires-python = ">=3.12"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "matplotlib",
+    "seaborn",
+    "jupyter",
+    "joblib",
+    "fastapi[standard]",
+    "uvicorn",
+    "pydantic",
+]
+
+[tool.uv]
+# Projeto de aplicação, não um pacote instalável
+package = false
